@@ -11,6 +11,16 @@ export function validate1099DAAgainstCalculations(
 ): Discrepancy[] {
   const discrepancies: Discrepancy[] = [];
 
+  // Check if we have unparsed 1099-DA files (exchange = 'Unknown')
+  // If so, skip validation since we can't extract data without OCR
+  const hasUnparsed1099DA = form1099DAs.some(f => normalizeExchangeName(f.exchange) === 'unknown');
+
+  if (hasUnparsed1099DA) {
+    // 1099-DA was uploaded but not parsed - skip all validation checks
+    // User will still get their calculated results
+    return discrepancies;
+  }
+
   // Calculate total proceeds by exchange
   const proceedsByExchange = calculateProceedsByExchange(transactions);
 

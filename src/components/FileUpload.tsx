@@ -138,15 +138,12 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
                 <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
                   <div>
                     <p className="font-medium">1099-DA Form:</p>
-                    <p>
-                      <a href="https://www.coinbase.com/settings/tax-documents" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">
-                        Account → Settings → Tax Documents
-                      </a>
-                    </p>
+                    <p>Visit <a href="https://accounts.coinbase.com/taxes" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">accounts.coinbase.com/taxes</a></p>
                   </div>
                   <div>
                     <p className="font-medium">Transaction History CSV:</p>
-                    <p>Coinbase.com → Portfolio → My Assets → (⋯) → Export → Transaction history → Generate report</p>
+                    <p><a href="https://accounts.coinbase.com/statements" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">accounts.coinbase.com/statements</a> → Asset = All Assets, Transaction Type = All Transactions, Date = Custom, From = as early as needed for your full transaction history, To = Dec 31, 2025, Format = CSV</p>
+
                   </div>
                 </div>
               </details>
@@ -159,12 +156,11 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
                 <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
                   <div>
                     <p className="font-medium">1099-DA Form:</p>
-                    <p>Binance.US → Account → Tax Documents</p>
+                    <p>Details at <a href='https://support.binance.us/en/articles/9842964-how-to-download-tax-forms-1099-misc-and-1099-da' target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Binance Support</a></p>
                   </div>
                   <div>
                     <p className="font-medium">Transaction History CSV:</p>
-                    <p>Binance.US → Wallet → Transaction History → Generate Statement</p>
-                  </div>
+                    <p>Details at <a href='https://support.binance.us/en/articles/9842967-how-to-download-your-transaction-history-or-tax-report' target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Binance Support</a></p>                  </div>
                 </div>
               </details>
 
@@ -176,11 +172,12 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
                 <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
                   <div>
                     <p className="font-medium">1099-DA Form:</p>
-                    <p>Kraken.com → Account → Tax Center → Download 1099</p>
                   </div>
                   <div>
                     <p className="font-medium">Transaction History CSV:</p>
-                    <p>Kraken.com → History → Export → Select date range → Download CSV</p>
+                    <p>Details at <a href='https://support.kraken.com/articles/208267878-how-to-export-your-account-history' target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">Kraken Support</a></p>
+                    <p>Export Types = Trades, Start date = as early as needed to encompass all past transactions, End date = Dec 31, 2025</p>
+                    <p>Download as CSV.</p>
                   </div>
                 </div>
               </details>
