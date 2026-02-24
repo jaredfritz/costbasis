@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
-import CSVInstructionTabs from './CSVInstructionTabs';
+import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 
 interface FileUploadProps {
   onFilesParsed: (files: { name: string; content: string }[]) => void;
@@ -64,9 +63,6 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* CSV Instructions */}
-      <CSVInstructionTabs />
-
       {/* Drop zone */}
       <div
         className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
@@ -164,7 +160,6 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
           </button>
         </div>
       )}
-
     </div>
   );
 }

@@ -182,7 +182,7 @@ export default function Home() {
             className="h-10 mx-auto mb-4"
           />
           <p className="text-gray-600">
-            Upload your transaction history to calculate cost basis using FIFO
+            Upload your transaction history to calculate cost basis to ensure you don't overpay.
           </p>
         </header>
 
