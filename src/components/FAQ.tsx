@@ -61,7 +61,7 @@ export default function FAQ() {
                 )}
               </button>
               {expandedIndex === index && (
-                <div className="px-6 pb-6 bg-gray-50 border-t border-gray-200">
+                <div className="px-6 pb-6 pt-4 bg-gray-50 border-t border-gray-200">
                   <p className="text-gray-700 leading-relaxed">
                     {faq.answer}{' '}
                     {faq.hasLink && (

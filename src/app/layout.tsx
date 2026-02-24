@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'costBasis - Crypto Tax Calculator',
+  title: 'CostBasis - Crypto Cost Basis Calculator',
   description: 'Stop overpaying the IRS. Calculate your crypto cost basis in minutes with our privacy-first tool. $9.99 flat fee for complete Form 8949.',
   icons: {
     icon: '/favicon.png',

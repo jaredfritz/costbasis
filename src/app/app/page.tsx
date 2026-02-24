@@ -105,14 +105,13 @@ export default function Home() {
       <main className="min-h-screen py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
-              <Calculator className="w-8 h-8 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Crypto Tax Calculator
-            </h1>
-            <p className="text-gray-600">
-              Calculate your cost basis for Crypto.com and Coinbase transactions
+            <img
+              src="/costbasis-logo.png"
+              alt="CostBasis"
+              className="h-10 mx-auto mb-4"
+            />
+            <p className="text-gray-600 text-lg">
+              Calculate your true cost basis for your crypto transactions
             </p>
           </div>
 
@@ -177,9 +176,11 @@ export default function Home() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Crypto Tax Calculator
-          </h1>
+          <img
+            src="/costbasis-logo.png"
+            alt="CostBasis"
+            className="h-10 mx-auto mb-4"
+          />
           <p className="text-gray-600">
             Upload your transaction history to calculate cost basis using FIFO
           </p>

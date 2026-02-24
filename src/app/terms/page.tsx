@@ -28,7 +28,7 @@ export default function TermsPage() {
                 Terms & Conditions
               </h1>
               <p className="text-gray-600 mt-1">
-                Crypto Tax Calculator Service Agreement
+                CostBasis Service Agreement
               </p>
             </div>
           </div>
@@ -42,7 +42,7 @@ export default function TermsPage() {
               1. Nature of Service
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              The Crypto Tax Calculator (the "Service") is a software tool designed to provide
+              CostBasis (the "Service") is a software tool designed to provide
               estimates of cryptocurrency capital gains and losses based on user-provided transaction
               data. We use the FIFO (First In, First Out) accounting method.
             </p>

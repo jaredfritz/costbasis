@@ -6,7 +6,6 @@ import Link from 'next/link';
 import DiagnosticFlow from '@/components/DiagnosticFlow';
 import DiagnosticResult from '@/components/DiagnosticResult';
 import FAQ from '@/components/FAQ';
-import ComprehensiveDisclaimer from '@/components/ComprehensiveDisclaimer';
 import ComparisonTable from '@/components/ComparisonTable';
 
 export default function LandingPage() {
@@ -186,9 +185,6 @@ export default function LandingPage() {
 
       {/* FAQ Section */}
       <FAQ />
-
-      {/* Comprehensive Disclaimer */}
-      <ComprehensiveDisclaimer />
     </main>
   );
 }
