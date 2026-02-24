@@ -100,37 +100,90 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Instructions for 1099-DA */}
+      {/* Instructions - Exchange-specific dropdowns */}
       <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-6">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h3 className="font-semibold text-blue-900 mb-2">Required: Upload Both Files</h3>
-            <p className="text-sm text-blue-800 mb-3">
-              To generate an accurate Form 8949, we need <strong>both</strong> your transaction history (CSV)
-              and your 1099-DA tax forms from each exchange.
+          <div className="w-full">
+            <h3 className="font-semibold text-blue-900 mb-2">Where to Find Your Files</h3>
+            <p className="text-sm text-blue-800 mb-4">
+              Upload your <strong>transaction history (CSV)</strong> and optionally your <strong>1099-DA form</strong> for validation.
             </p>
-            <div className="space-y-2 text-sm text-blue-800">
-              <p className="font-medium">Where to find your 1099-DA:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>
-                  <strong>Coinbase:</strong>{' '}
-                  <a
-                    href="https://www.coinbase.com/settings/tax-documents"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-blue-600"
-                  >
-                    Account → Tax Documents
-                  </a>
-                </li>
-                <li>
-                  <strong>Crypto.com:</strong> App → Accounts → Tax Reports → Download 1099-DA
-                </li>
-                <li>
-                  <strong>Other exchanges:</strong> Check your account's tax or documents section
-                </li>
-              </ul>
+
+            {/* Exchange-specific instructions */}
+            <div className="space-y-2">
+              {/* Crypto.com */}
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-blue-900 hover:text-blue-700 flex items-center gap-2">
+                  <span className="text-blue-600">▸</span> Crypto.com
+                </summary>
+                <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
+                  <div>
+                    <p className="font-medium">1099-DA Form:</p>
+                    <p>Visit <a href="https://crypto.com/1099form" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">crypto.com/1099form</a></p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Transaction History CSV:</p>
+                    <p>Crypto.com app → Accounts → Transaction History (clock with $ icon) → Crypto Wallet → Export → Transaction = Crypto Wallet, From = as early as possible, To: December 31, 2025</p>
+                    <p className="text-xs italic mt-1">Note: Crypto.com may limit downloads to 3 years at a time, requiring multiple exports.</p>
+                  </div>
+                </div>
+              </details>
+
+              {/* Coinbase */}
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-blue-900 hover:text-blue-700 flex items-center gap-2">
+                  <span className="text-blue-600">▸</span> Coinbase
+                </summary>
+                <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
+                  <div>
+                    <p className="font-medium">1099-DA Form:</p>
+                    <p>
+                      <a href="https://www.coinbase.com/settings/tax-documents" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">
+                        Account → Settings → Tax Documents
+                      </a>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Transaction History CSV:</p>
+                    <p>Coinbase.com → Portfolio → My Assets → (⋯) → Export → Transaction history → Generate report</p>
+                  </div>
+                </div>
+              </details>
+
+              {/* Binance */}
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-blue-900 hover:text-blue-700 flex items-center gap-2">
+                  <span className="text-blue-600">▸</span> Binance.US
+                </summary>
+                <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
+                  <div>
+                    <p className="font-medium">1099-DA Form:</p>
+                    <p>Binance.US → Account → Tax Documents</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Transaction History CSV:</p>
+                    <p>Binance.US → Wallet → Transaction History → Generate Statement</p>
+                  </div>
+                </div>
+              </details>
+
+              {/* Kraken */}
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-blue-900 hover:text-blue-700 flex items-center gap-2">
+                  <span className="text-blue-600">▸</span> Kraken
+                </summary>
+                <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-200 text-sm text-blue-800 space-y-2">
+                  <div>
+                    <p className="font-medium">1099-DA Form:</p>
+                    <p>Kraken.com → Account → Tax Center → Download 1099</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Transaction History CSV:</p>
+                    <p>Kraken.com → History → Export → Select date range → Download CSV</p>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </div>
@@ -205,9 +258,25 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
             </div>
           ))}
 
+          {csvFileCount === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <p className="text-sm text-amber-800">
+                <strong>Transaction CSV required</strong> - Please upload at least one CSV file to continue
+              </p>
+            </div>
+          )}
+
+          {csvFileCount > 0 && form1099DACount === 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+              <p className="text-sm text-blue-800">
+                <strong>Optional:</strong> Upload your 1099-DA form for validation, or continue without it
+              </p>
+            </div>
+          )}
+
           <button
             onClick={processFiles}
-            disabled={isProcessing || csvFileCount === 0 || form1099DACount === 0}
+            disabled={isProcessing || csvFileCount === 0}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             {isProcessing ? (
@@ -236,10 +305,12 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                {csvFileCount === 0 || form1099DACount === 0 ? (
-                  <>Upload Both CSV and 1099-DA to Continue</>
-                ) : (
+                {csvFileCount === 0 ? (
+                  <>Upload CSV to Continue</>
+                ) : form1099DACount > 0 ? (
                   <>Calculate Cost Basis ({csvFileCount} CSV, {form1099DACount} 1099-DA)</>
+                ) : (
+                  <>Calculate Cost Basis ({csvFileCount} CSV)</>
                 )}
               </>
             )}

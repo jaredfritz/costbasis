@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { format } from 'date-fns';
 import { TaxSummary as TaxSummaryType } from '@/lib/types';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, Lock, FileText, Coins } from 'lucide-react';
 
@@ -9,9 +10,10 @@ interface TaxSummaryProps {
   isUnlocked?: boolean;
   onUnlock?: () => void;
   transactionCount?: number;
+  dateRange?: { min: Date; max: Date };
 }
 
-export default function TaxSummary({ summary, isUnlocked = false, onUnlock, transactionCount }: TaxSummaryProps) {
+export default function TaxSummary({ summary, isUnlocked = false, onUnlock, transactionCount, dateRange }: TaxSummaryProps) {
   const formatCurrency = (amount: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -73,7 +75,7 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
       </div>
 
       {/* Summary Badges - "Proof of Utility" */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Processing Badge */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
           <div className="flex items-center gap-3">
@@ -101,6 +103,23 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
                 <p className="text-lg font-bold text-green-700">
                   {topAssets.join(', ')}
                   {topAssets.length === 3 && ' + more'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Date Range Badge */}
+        {dateRange && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Calendar className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-purple-900">Transaction Range</p>
+                <p className="text-sm font-bold text-purple-700">
+                  {format(dateRange.min, 'MMM d, yyyy')} - {format(dateRange.max, 'MMM d, yyyy')}
                 </p>
               </div>
             </div>
