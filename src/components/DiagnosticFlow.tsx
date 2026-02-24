@@ -46,7 +46,12 @@ const questions: Question[] = [
       { value: 'no', label: 'No' },
       { value: 'unsure', label: 'Not Sure' },
     ],
-    insight: () => "That's the IRS's copy. Now you need your own accurate data to ensure you don't overpay.",
+    insight: (value) => {
+      if (value === 'yes') {
+        return "That's what they sent the IRS. Now you need your own accurate data to ensure you don't overpay.";
+      }
+      return "Most should be arriving soon (if they haven't already). Regardless, you need your own accurate data to ensure you don't overpay.";
+    },
   },
   {
     id: 'volume',
@@ -132,7 +137,7 @@ export default function DiagnosticFlow({ onComplete }: DiagnosticFlowProps) {
       } else {
         onComplete(newAnswers);
       }
-    },2000);
+    },2500);
   };
 
   return (
