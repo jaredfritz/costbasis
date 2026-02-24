@@ -16,6 +16,10 @@ export default function TaxSoftwareGuide({ summary, isUnlocked = false, onUnlock
   const [selectedSoftware, setSelectedSoftware] = useState<SoftwareType>('freetaxusa');
   const [expandedStep, setExpandedStep] = useState<number | null>(0);
 
+  // If proceeds are $0, no tax calculations are needed - auto-unlock
+  const noTaxableEvents = summary.totalProceeds === 0;
+  const effectivelyUnlocked = isUnlocked || noTaxableEvents;
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -26,7 +30,7 @@ export default function TaxSoftwareGuide({ summary, isUnlocked = false, onUnlock
 
   // Blurred value component for locked state
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
-    if (isUnlocked) {
+    if (effectivelyUnlocked) {
       return <span className={className}>{children}</span>;
     }
     return (
@@ -315,7 +319,7 @@ export default function TaxSoftwareGuide({ summary, isUnlocked = false, onUnlock
   return (
     <div className="space-y-6">
       {/* Unlock CTA */}
-      {!isUnlocked && (
+      {!isUnlocked && !noTaxableEvents && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

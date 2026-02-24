@@ -21,14 +21,27 @@ export function validate1099DAAgainstCalculations(
     return discrepancies;
   }
 
+  // Special check: If calculated proceeds are $0 but 1099-DA shows proceeds > 0
+  // This indicates a major discrepancy (missing transactions or incorrect data)
+  const totalCalculatedProceeds = taxSummary.totalProceeds;
+  const total1099DAProceeds = form1099DAs.reduce((sum, form) => sum + form.grossProceeds, 0);
+
+  if (totalCalculatedProceeds === 0 && total1099DAProceeds > 0) {
+    discrepancies.push({
+      type: 'missing-transactions',
+      severity: 'error',
+      message: `Major discrepancy: Your 1099-DA form(s) report $${total1099DAProceeds.toFixed(2)} in gross proceeds, but we found $0.00 in your transaction history. This suggests that your transaction history is incomplete or missing. Please verify that you've uploaded all transaction data for ${taxSummary.taxYear}.`,
+      expected: total1099DAProceeds,
+      actual: 0,
+    });
+    // Return early - no point in running other checks if we have no transactions
+    return discrepancies;
+  }
+
   // Calculate total proceeds by exchange
   const proceedsByExchange = calculateProceedsByExchange(transactions);
 
-  // Total 1099-DA proceeds
-  const total1099DAProceeds = form1099DAs.reduce((sum, form) => sum + form.grossProceeds, 0);
-
   // Check 1: Total proceeds match
-  const totalCalculatedProceeds = taxSummary.totalProceeds;
   const proceedsDifference = Math.abs(total1099DAProceeds - totalCalculatedProceeds);
   const proceedsTolerance = totalCalculatedProceeds * 0.02; // 2% tolerance for rounding differences
 

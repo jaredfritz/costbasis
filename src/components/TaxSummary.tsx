@@ -25,6 +25,10 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
     return amount < 0 ? `(${formatted})` : formatted;
   };
 
+  // If proceeds are $0, no tax calculations are needed - auto-unlock
+  const noTaxableEvents = summary.totalProceeds === 0;
+  const effectivelyUnlocked = isUnlocked || noTaxableEvents;
+
   // Extract top 3 assets from form entries
   const topAssets = useMemo(() => {
     const assetCounts = new Map<string, number>();
@@ -50,7 +54,7 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
 
   // Blurred value component
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
-    if (isUnlocked) {
+    if (effectivelyUnlocked) {
       return <span className={className}>{children}</span>;
     }
     return (
@@ -127,6 +131,28 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
         )}
       </div>
 
+      {/* No Taxable Events Message */}
+      {noTaxableEvents && (
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                No Tax Forms Needed
+              </h3>
+              <p className="text-blue-800">
+                Your transaction history shows $0.00 in proceeds for {summary.taxYear}. This means you had no taxable dispositions during this period, so you don't need to file Form 8949 or report cryptocurrency gains/losses.
+              </p>
+              <p className="text-sm text-blue-700 mt-2">
+                Note: This analysis is based on the transaction data you provided. If you expected to see proceeds but don't, please verify that you've uploaded your complete transaction history.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Net Result Card */}
       <div
         className={`p-6 rounded-xl ${
@@ -151,7 +177,7 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
       </div>
 
       {/* Unlock CTA - Updated Copy */}
-      {!isUnlocked && (
+      {!isUnlocked && !noTaxableEvents && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

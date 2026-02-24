@@ -13,6 +13,10 @@ interface Form8949Props {
 export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form8949Props) {
   const printRef = useRef<HTMLDivElement>(null);
 
+  // If proceeds are $0, no tax calculations are needed - auto-unlock
+  const noTaxableEvents = summary.totalProceeds === 0;
+  const effectivelyUnlocked = isUnlocked || noTaxableEvents;
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -43,7 +47,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
 
   // Blurred value component for locked state - uses backdrop blur for premium feel
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
-    if (isUnlocked) {
+    if (effectivelyUnlocked) {
       return <span className={className}>{children}</span>;
     }
     return (
@@ -388,7 +392,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
   return (
     <div>
       {/* Unlock CTA for locked users - Updated messaging */}
-      {!isUnlocked && (
+      {!isUnlocked && !noTaxableEvents && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -415,32 +419,32 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
       {/* Action buttons - Disabled with lock icon until payment */}
       <div className="flex gap-3 mb-6 no-print">
         <button
-          onClick={isUnlocked ? handlePrint : undefined}
-          disabled={!isUnlocked}
+          onClick={effectivelyUnlocked ? handlePrint : undefined}
+          disabled={!effectivelyUnlocked}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            isUnlocked
+            effectivelyUnlocked
               ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
           }`}
-          title={!isUnlocked ? 'Unlock to enable printing' : 'Print Form 8949'}
+          title={!effectivelyUnlocked ? 'Unlock to enable printing' : 'Print Form 8949'}
         >
           <Printer className="w-4 h-4" />
           Print
-          {!isUnlocked && <Lock className="w-3 h-3 ml-1" />}
+          {!effectivelyUnlocked && <Lock className="w-3 h-3 ml-1" />}
         </button>
         <button
-          onClick={isUnlocked ? downloadAsText : undefined}
-          disabled={!isUnlocked}
+          onClick={effectivelyUnlocked ? downloadAsText : undefined}
+          disabled={!effectivelyUnlocked}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            isUnlocked
+            effectivelyUnlocked
               ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
           }`}
-          title={!isUnlocked ? 'Unlock to enable downloads' : 'Download as TXT file'}
+          title={!effectivelyUnlocked ? 'Unlock to enable downloads' : 'Download as TXT file'}
         >
           <Download className="w-4 h-4" />
           Download TXT
-          {!isUnlocked && <Lock className="w-3 h-3 ml-1" />}
+          {!effectivelyUnlocked && <Lock className="w-3 h-3 ml-1" />}
         </button>
       </div>
 
