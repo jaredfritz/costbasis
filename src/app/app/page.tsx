@@ -287,6 +287,7 @@ export default function Home() {
                   summary={result.taxSummary}
                   isUnlocked={isUnlocked}
                   onUnlock={() => setIsUnlocked(true)}
+                  transactionCount={allTransactions.length}
                 />
               )}
               {activeTab === 'form8949' && result.taxSummary && (
@@ -303,11 +304,6 @@ export default function Home() {
                   onUnlock={() => setIsUnlocked(true)}
                 />
               )}
-            </div>
-
-            {/* Transaction count info */}
-            <div className="mt-4 text-center text-sm text-gray-500">
-              Processed {allTransactions.length} transactions from your files
             </div>
           </>
         )}

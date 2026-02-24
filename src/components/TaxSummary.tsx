@@ -1,16 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TaxSummary as TaxSummaryType } from '@/lib/types';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Lock } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Lock, FileText, Coins } from 'lucide-react';
 
 interface TaxSummaryProps {
   summary: TaxSummaryType;
   isUnlocked?: boolean;
   onUnlock?: () => void;
+  transactionCount?: number;
 }
 
-export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: TaxSummaryProps) {
+export default function TaxSummary({ summary, isUnlocked = false, onUnlock, transactionCount }: TaxSummaryProps) {
   const formatCurrency = (amount: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -21,6 +22,29 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
 
     return amount < 0 ? `(${formatted})` : formatted;
   };
+
+  // Extract top 3 assets from form entries
+  const topAssets = useMemo(() => {
+    const assetCounts = new Map<string, number>();
+
+    // Count asset occurrences from descriptions
+    [...summary.shortTerm.entries, ...summary.longTerm.entries].forEach(entry => {
+      // Extract asset from description (e.g., "BTC 0.021..." -> "BTC")
+      const match = entry.description.match(/^([A-Z0-9]+)\s/);
+      if (match) {
+        const asset = match[1];
+        assetCounts.set(asset, (assetCounts.get(asset) || 0) + 1);
+      }
+    });
+
+    // Get top 3 by frequency
+    return Array.from(assetCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([asset]) => asset);
+  }, [summary]);
+
+  const taxableEvents = summary.shortTerm.entries.length + summary.longTerm.entries.length;
 
   // Blurred value component
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
@@ -38,7 +62,7 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Processing Badge */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-800">
           Tax Year {summary.taxYear} Summary
@@ -46,6 +70,42 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
         <p className="text-gray-500 mt-1">
           Calculated using FIFO (First In, First Out) method
         </p>
+      </div>
+
+      {/* Summary Badges - "Proof of Utility" */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Processing Badge */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-blue-900">Heavy Lifting Complete</p>
+              <p className="text-2xl font-bold text-blue-700">
+                {transactionCount || 'Multiple'} Transactions Processed
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Asset Detection Badge */}
+        {topAssets.length > 0 && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Coins className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-green-900">Assets Detected</p>
+                <p className="text-lg font-bold text-green-700">
+                  {topAssets.join(', ')}
+                  {topAssets.length === 3 && ' + more'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Net Result Card */}
@@ -71,7 +131,7 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
         </div>
       </div>
 
-      {/* Unlock CTA */}
+      {/* Unlock CTA - Updated Copy */}
       {!isUnlocked && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
@@ -80,15 +140,15 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
                 <Lock className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Unlock Your Full Tax Report</h3>
+                <h3 className="font-semibold text-lg">Unlock Your Complete Tax Report</h3>
                 <p className="text-blue-100 text-sm">
-                  Get detailed Form 8949 entries, cost basis breakdown, and export options
+                  We found {transactionCount || 'multiple'} transactions and calculated your cost basis for {taxableEvents} taxable event{taxableEvents !== 1 ? 's' : ''}. Unlock your complete Form 8949 and filing-ready values for $9.99.
                 </p>
               </div>
             </div>
             <button
               onClick={onUnlock}
-              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg"
+              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg whitespace-nowrap"
             >
               Unlock for $9.99
             </button>
@@ -121,10 +181,10 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock }: Ta
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium text-gray-600">Transactions</span>
+            <span className="text-sm font-medium text-gray-600">Taxable Events</span>
           </div>
           <p className="text-2xl font-semibold text-gray-800">
-            {summary.shortTerm.entries.length + summary.longTerm.entries.length}
+            {taxableEvents}
           </p>
         </div>
       </div>

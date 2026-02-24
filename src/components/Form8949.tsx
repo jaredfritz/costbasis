@@ -22,14 +22,15 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
     }).format(amount);
   };
 
-  // Blurred value component for locked state
+  // Blurred value component for locked state - uses backdrop blur for premium feel
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
     if (isUnlocked) {
       return <span className={className}>{children}</span>;
     }
     return (
-      <span className={`${className} select-none filter blur-md`} aria-hidden="true">
-        {children}
+      <span className={`${className} relative inline-block`}>
+        <span className="select-none opacity-70">{children}</span>
+        <span className="absolute inset-0 backdrop-blur-[6px] bg-white/30" aria-hidden="true"></span>
       </span>
     );
   };
@@ -367,24 +368,24 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
 
   return (
     <div>
-      {/* Unlock CTA for locked users */}
+      {/* Unlock CTA for locked users - Updated messaging */}
       {!isUnlocked && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-lg">
                 <Lock className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Unlock Your Form 8949 Report</h3>
+                <h3 className="font-semibold text-lg">Your Form 8949 is Ready</h3>
                 <p className="text-blue-100 text-sm">
-                  Get full access to download, print, and use your detailed tax report
+                  Unlock to download, print, and file your complete tax report with all values revealed
                 </p>
               </div>
             </div>
             <button
               onClick={onUnlock}
-              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg"
+              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg whitespace-nowrap"
             >
               Unlock for $9.99
             </button>
@@ -392,29 +393,31 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons - Disabled with lock icon until payment */}
       <div className="flex gap-3 mb-6 no-print">
         <button
-          onClick={handlePrint}
+          onClick={isUnlocked ? handlePrint : undefined}
           disabled={!isUnlocked}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
             isUnlocked
-              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
           }`}
+          title={!isUnlocked ? 'Unlock to enable printing' : 'Print Form 8949'}
         >
           <Printer className="w-4 h-4" />
           Print
           {!isUnlocked && <Lock className="w-3 h-3 ml-1" />}
         </button>
         <button
-          onClick={downloadAsText}
+          onClick={isUnlocked ? downloadAsText : undefined}
           disabled={!isUnlocked}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
             isUnlocked
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
           }`}
+          title={!isUnlocked ? 'Unlock to enable downloads' : 'Download as TXT file'}
         >
           <Download className="w-4 h-4" />
           Download TXT
