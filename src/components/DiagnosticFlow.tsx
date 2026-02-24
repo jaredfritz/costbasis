@@ -80,7 +80,10 @@ const questions: Question[] = [
       { value: 'unsure', label: 'Unsure' },
       { value: 'missing', label: "I know it's missing" },
     ],
-    insight: () => {
+    insight: (value) => {
+      if (value === 'confident') {
+        return "Smart. Our tool provides a perfect final 'audit-check' before you hit submit.";
+      }
       return "This is the exact 'trap' our tool was built to fix. We've got you covered.";
     },
   },
@@ -129,7 +132,7 @@ export default function DiagnosticFlow({ onComplete }: DiagnosticFlowProps) {
       } else {
         onComplete(newAnswers);
       }
-    }, 1000);
+    },2000);
   };
 
   return (
