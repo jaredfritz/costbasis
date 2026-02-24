@@ -62,6 +62,28 @@ export interface MatchedLot {
   holdingPeriod: 'short-term' | 'long-term';
 }
 
+// 1099-DA Form Data (IRS Form for Digital Assets starting 2025)
+export interface Form1099DA {
+  fileName: string;
+  exchange: string; // Name of the exchange/broker
+  grossProceeds: number; // Box 1a - Gross proceeds
+  basisReportedToIRS: boolean; // Whether cost basis was reported to IRS
+  shortTermBox: 'G' | 'H' | 'I'; // G = basis reported, H = basis not reported, I = not applicable
+  longTermBox: 'J' | 'K' | 'L'; // J = basis reported, K = basis not reported, L = not applicable
+  hasShortTerm: boolean;
+  hasLongTerm: boolean;
+  taxYear: number;
+}
+
+// Manual entry data for 1099-DA when user enters info
+export interface Form1099DAManualEntry {
+  exchange: string;
+  grossProceeds: number;
+  basisReportedToIRS: boolean;
+  hasShortTerm: boolean;
+  hasLongTerm: boolean;
+}
+
 // Form 8949 entry
 export interface Form8949Entry {
   description: string;
@@ -73,7 +95,7 @@ export interface Form8949Entry {
   adjustmentAmount: number;
   gainLoss: number;
   holdingPeriod: 'short-term' | 'long-term';
-  box: 'B' | 'E'; // B = short-term basis not reported, E = long-term basis not reported
+  box: 'B' | 'E' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L'; // Traditional securities (A-F) or Digital assets (G-L)
 }
 
 // Tax summary
@@ -96,12 +118,24 @@ export interface TaxSummary {
   netGainLoss: number;
 }
 
+// Discrepancy between 1099-DA and calculated values
+export interface Discrepancy {
+  type: 'proceeds' | 'missing-transactions' | 'extra-transactions';
+  severity: 'error' | 'warning';
+  message: string;
+  form1099DA?: string; // Which 1099-DA form this relates to
+  expected?: number;
+  actual?: number;
+}
+
 // Processing result
 export interface ProcessingResult {
   success: boolean;
   taxSummary?: TaxSummary;
   dispositions?: DispositionWithBasis[];
   remainingLots?: TaxLot[];
+  form1099DAs?: Form1099DA[]; // Uploaded 1099-DA forms
+  discrepancies?: Discrepancy[]; // Validation issues between 1099-DA and transactions
   warnings: string[];
   errors: string[];
 }

@@ -3,10 +3,11 @@
 import React, { useState, useCallback } from 'react';
 import Papa from 'papaparse';
 import { Calculator, Shield, FileText, HelpCircle, Download, Upload, FileCheck } from 'lucide-react';
-import { FileUpload, TaxSummary, Form8949, TaxSoftwareGuide, Disclaimer, CompactDisclaimer } from '@/components';
+import { FileUpload, TaxSummary, Form8949, TaxSoftwareGuide, Disclaimer, CompactDisclaimer, Form1099DAEntry } from '@/components';
 import { parseCSV, preprocessCoinbaseCSV } from '@/lib/parsers';
 import { calculateFIFO } from '@/lib/calculator';
-import { TaxSummary as TaxSummaryType, NormalizedTransaction, ProcessingResult } from '@/lib/types';
+import { validate1099DAAgainstCalculations } from '@/lib/validation';
+import { TaxSummary as TaxSummaryType, NormalizedTransaction, ProcessingResult, Form1099DA, Form1099DAManualEntry } from '@/lib/types';
 
 type TabType = 'summary' | 'form8949' | 'guide';
 
@@ -21,8 +22,75 @@ export default function Home() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
+  // 1099-DA state
+  const [pending1099DAFiles, setPending1099DAFiles] = useState<{ name: string; file: File }[]>([]);
+  const [current1099DAIndex, setCurrent1099DAIndex] = useState<number | null>(null);
+  const [collected1099DAs, setCollected1099DAs] = useState<Form1099DA[]>([]);
+  const [pendingCSVFiles, setPendingCSVFiles] = useState<{ name: string; content: string }[]>([]);
+
   const handleFilesParsed = useCallback(
-    async (files: { name: string; content: string }[]) => {
+    async (files: { csvFiles: { name: string; content: string }[]; form1099DAFiles: { name: string; file: File }[] }) => {
+      setErrors([]);
+      setWarnings([]);
+
+      // Store the files and start the 1099-DA entry workflow
+      setPendingCSVFiles(files.csvFiles);
+      setPending1099DAFiles(files.form1099DAFiles);
+
+      if (files.form1099DAFiles.length > 0) {
+        // Start with the first 1099-DA file
+        setCurrent1099DAIndex(0);
+      } else {
+        // If no 1099-DA files, show error (they're required)
+        setErrors(['1099-DA forms are required. Please upload your 1099-DA forms from your exchange(s).']);
+      }
+    },
+    []
+  );
+
+  const handle1099DASubmit = useCallback((data: Form1099DAManualEntry) => {
+    if (current1099DAIndex === null) return;
+
+    const currentFile = pending1099DAFiles[current1099DAIndex];
+
+    // Create Form1099DA object
+    const form1099DA: Form1099DA = {
+      fileName: currentFile.name,
+      exchange: data.exchange,
+      grossProceeds: data.grossProceeds,
+      basisReportedToIRS: data.basisReportedToIRS,
+      shortTermBox: data.basisReportedToIRS ? 'G' : 'H',
+      longTermBox: data.basisReportedToIRS ? 'J' : 'K',
+      hasShortTerm: data.hasShortTerm,
+      hasLongTerm: data.hasLongTerm,
+      taxYear,
+    };
+
+    // Add to collected forms
+    const newCollected = [...collected1099DAs, form1099DA];
+    setCollected1099DAs(newCollected);
+
+    // Move to next file or process if done
+    if (current1099DAIndex + 1 < pending1099DAFiles.length) {
+      setCurrent1099DAIndex(current1099DAIndex + 1);
+    } else {
+      // All 1099-DAs collected, now process the CSVs
+      setCurrent1099DAIndex(null);
+      processTransactions(pendingCSVFiles, newCollected);
+    }
+  }, [current1099DAIndex, pending1099DAFiles, collected1099DAs, taxYear, pendingCSVFiles]);
+
+  const handle1099DACancel = useCallback(() => {
+    // Reset the workflow
+    setCurrent1099DAIndex(null);
+    setPending1099DAFiles([]);
+    setPendingCSVFiles([]);
+    setCollected1099DAs([]);
+    setErrors(['1099-DA entry cancelled. Please upload your files again.']);
+  }, []);
+
+  const processTransactions = useCallback(
+    async (csvFiles: { name: string; content: string }[], form1099DAs: Form1099DA[]) => {
       setIsProcessing(true);
       setErrors([]);
       setWarnings([]);
@@ -32,7 +100,7 @@ export default function Home() {
         const allWarnings: string[] = [];
         const allErrors: string[] = [];
 
-        for (const file of files) {
+        for (const file of csvFiles) {
           // Preprocess Coinbase CSVs that may have metadata rows
           let content = file.content;
           if (content.includes('Transactions') && content.includes('Transaction Type')) {
@@ -76,12 +144,32 @@ export default function Home() {
 
         setAllTransactions(allParsedTransactions);
 
-        // Calculate using FIFO
-        const calcResult = calculateFIFO(allParsedTransactions, taxYear);
+        // Calculate using FIFO with 1099-DA data
+        const calcResult = calculateFIFO(allParsedTransactions, taxYear, form1099DAs);
 
-        setResult(calcResult);
-        setWarnings([...allWarnings, ...calcResult.warnings]);
-        setErrors([...allErrors, ...calcResult.errors]);
+        // Validate 1099-DA forms against calculated results
+        const discrepancies = calcResult.taxSummary
+          ? validate1099DAAgainstCalculations(form1099DAs, calcResult.taxSummary, allParsedTransactions)
+          : [];
+
+        // Build result with 1099-DA data and validation
+        const resultWithForms: ProcessingResult = {
+          ...calcResult,
+          form1099DAs,
+          discrepancies,
+        };
+
+        // Convert discrepancies to warnings/errors
+        const discrepancyWarnings = discrepancies
+          .filter(d => d.severity === 'warning')
+          .map(d => d.message);
+        const discrepancyErrors = discrepancies
+          .filter(d => d.severity === 'error')
+          .map(d => d.message);
+
+        setResult(resultWithForms);
+        setWarnings([...allWarnings, ...calcResult.warnings, ...discrepancyWarnings]);
+        setErrors([...allErrors, ...calcResult.errors, ...discrepancyErrors]);
       } catch (error) {
         setErrors([`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
       } finally {
@@ -97,6 +185,10 @@ export default function Home() {
     setErrors([]);
     setWarnings([]);
     setActiveTab('summary');
+    setPending1099DAFiles([]);
+    setCurrent1099DAIndex(null);
+    setCollected1099DAs([]);
+    setPendingCSVFiles([]);
   };
 
   // Show disclaimer acceptance screen first
@@ -311,6 +403,16 @@ export default function Home() {
         {/* Footer Disclaimer */}
         <CompactDisclaimer />
       </div>
+
+      {/* 1099-DA Entry Modal */}
+      {current1099DAIndex !== null && pending1099DAFiles[current1099DAIndex] && (
+        <Form1099DAEntry
+          fileName={pending1099DAFiles[current1099DAIndex].name}
+          fileUrl={URL.createObjectURL(pending1099DAFiles[current1099DAIndex].file)}
+          onSubmit={handle1099DASubmit}
+          onCancel={handle1099DACancel}
+        />
+      )}
     </main>
   );
 }

@@ -6,6 +6,7 @@ import {
   Form8949Entry,
   TaxSummary,
   ProcessingResult,
+  Form1099DA,
 } from './types';
 import { differenceInDays, format } from 'date-fns';
 
@@ -19,11 +20,38 @@ function isLongTerm(acquisitionDate: Date, dispositionDate: Date): boolean {
 }
 
 /**
+ * Determine the correct Form 8949 box based on 1099-DA data
+ */
+function determineForm8949Box(
+  holdingPeriod: 'short-term' | 'long-term',
+  form1099DAs: Form1099DA[]
+): 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'B' | 'E' {
+  // If no 1099-DA forms provided, fall back to old behavior (B/E)
+  // This maintains backward compatibility
+  if (form1099DAs.length === 0) {
+    return holdingPeriod === 'short-term' ? 'B' : 'E';
+  }
+
+  // For crypto transactions with 1099-DA:
+  // Check if any 1099-DA has basis reported to IRS
+  const hasBasisReported = form1099DAs.some(form => form.basisReportedToIRS);
+
+  if (holdingPeriod === 'short-term') {
+    // Box G = basis reported, Box H = basis not reported
+    return hasBasisReported ? 'G' : 'H';
+  } else {
+    // Box J = basis reported, Box K = basis not reported
+    return hasBasisReported ? 'J' : 'K';
+  }
+}
+
+/**
  * Calculate cost basis and gains/losses using FIFO method
  */
 export function calculateFIFO(
   transactions: NormalizedTransaction[],
-  taxYear: number
+  taxYear: number,
+  form1099DAs: Form1099DA[] = []
 ): ProcessingResult {
   const warnings: string[] = [];
   const errors: string[] = [];
@@ -131,7 +159,7 @@ export function calculateFIFO(
   );
 
   // Generate Form 8949 entries
-  const form8949Entries = generateForm8949Entries(taxYearDispositions);
+  const form8949Entries = generateForm8949Entries(taxYearDispositions, form1099DAs);
 
   // Calculate summary
   const taxSummary = calculateTaxSummary(form8949Entries, taxYear);
@@ -155,7 +183,10 @@ export function calculateFIFO(
 /**
  * Generate Form 8949 entries from dispositions
  */
-function generateForm8949Entries(dispositions: DispositionWithBasis[]): Form8949Entry[] {
+function generateForm8949Entries(
+  dispositions: DispositionWithBasis[],
+  form1099DAs: Form1099DA[]
+): Form8949Entry[] {
   const entries: Form8949Entry[] = [];
 
   for (const disposition of dispositions) {
@@ -183,7 +214,7 @@ function generateForm8949Entries(dispositions: DispositionWithBasis[]): Form8949
           adjustmentAmount: 0,
           gainLoss: Math.round((longTermProceeds - longTermCostBasis) * 100) / 100,
           holdingPeriod: 'long-term',
-          box: 'E',
+          box: determineForm8949Box('long-term', form1099DAs),
         });
       }
 
@@ -202,7 +233,7 @@ function generateForm8949Entries(dispositions: DispositionWithBasis[]): Form8949
           adjustmentAmount: 0,
           gainLoss: Math.round((shortTermProceeds - shortTermCostBasis) * 100) / 100,
           holdingPeriod: 'short-term',
-          box: 'B',
+          box: determineForm8949Box('short-term', form1099DAs),
         });
       }
     } else {
@@ -211,6 +242,8 @@ function generateForm8949Entries(dispositions: DispositionWithBasis[]): Form8949
         disposition.lots.length === 1
           ? format(disposition.lots[0].acquisitionDate, 'MM/dd/yyyy')
           : 'Various';
+
+      const holdingPeriod = disposition.holdingPeriod as 'short-term' | 'long-term';
 
       entries.push({
         description: `${disposition.asset} (${disposition.amountSold.toFixed(8)})`,
@@ -221,8 +254,8 @@ function generateForm8949Entries(dispositions: DispositionWithBasis[]): Form8949
         adjustmentCode: '',
         adjustmentAmount: 0,
         gainLoss: Math.round(disposition.gainLoss * 100) / 100,
-        holdingPeriod: disposition.holdingPeriod as 'short-term' | 'long-term',
-        box: disposition.holdingPeriod === 'long-term' ? 'E' : 'B',
+        holdingPeriod,
+        box: determineForm8949Box(holdingPeriod, form1099DAs),
       });
     }
   }

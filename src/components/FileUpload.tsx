@@ -1,16 +1,39 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, FileBarChart, AlertCircle } from 'lucide-react';
+
+interface FileWithType {
+  file: File;
+  type: 'csv' | '1099-da';
+}
 
 interface FileUploadProps {
-  onFilesParsed: (files: { name: string; content: string }[]) => void;
+  onFilesParsed: (files: {
+    csvFiles: { name: string; content: string }[];
+    form1099DAFiles: { name: string; file: File }[];
+  }) => void;
   isProcessing: boolean;
 }
 
 export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadProps) {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileWithType[]>([]);
   const [dragActive, setDragActive] = useState(false);
+
+  const categorizeFile = (file: File): 'csv' | '1099-da' | null => {
+    if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+      return 'csv';
+    }
+    if (
+      file.type === 'application/pdf' ||
+      file.name.endsWith('.pdf') ||
+      file.type.startsWith('image/') ||
+      ['.jpg', '.jpeg', '.png'].some(ext => file.name.toLowerCase().endsWith(ext))
+    ) {
+      return '1099-da';
+    }
+    return null;
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -27,9 +50,12 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
     e.stopPropagation();
     setDragActive(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(
-      (file) => file.type === 'text/csv' || file.name.endsWith('.csv')
-    );
+    const droppedFiles = Array.from(e.dataTransfer.files)
+      .map(file => {
+        const type = categorizeFile(file);
+        return type ? { file, type } : null;
+      })
+      .filter((item): item is FileWithType => item !== null);
 
     if (droppedFiles.length > 0) {
       setFiles((prev) => [...prev, ...droppedFiles]);
@@ -37,9 +63,12 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
   }, []);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []).filter(
-      (file) => file.type === 'text/csv' || file.name.endsWith('.csv')
-    );
+    const selectedFiles = Array.from(e.target.files || [])
+      .map(file => {
+        const type = categorizeFile(file);
+        return type ? { file, type } : null;
+      })
+      .filter((item): item is FileWithType => item !== null);
 
     if (selectedFiles.length > 0) {
       setFiles((prev) => [...prev, ...selectedFiles]);
@@ -51,18 +80,62 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
   }, []);
 
   const processFiles = useCallback(async () => {
-    const fileContents: { name: string; content: string }[] = [];
+    const csvFiles: { name: string; content: string }[] = [];
+    const form1099DAFiles: { name: string; file: File }[] = [];
 
-    for (const file of files) {
-      const content = await file.text();
-      fileContents.push({ name: file.name, content });
+    for (const { file, type } of files) {
+      if (type === 'csv') {
+        const content = await file.text();
+        csvFiles.push({ name: file.name, content });
+      } else if (type === '1099-da') {
+        form1099DAFiles.push({ name: file.name, file });
+      }
     }
 
-    onFilesParsed(fileContents);
+    onFilesParsed({ csvFiles, form1099DAFiles });
   }, [files, onFilesParsed]);
+
+  const csvFileCount = files.filter(f => f.type === 'csv').length;
+  const form1099DACount = files.filter(f => f.type === '1099-da').length;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {/* Instructions for 1099-DA */}
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-blue-900 mb-2">Required: Upload Both Files</h3>
+            <p className="text-sm text-blue-800 mb-3">
+              To generate an accurate Form 8949, we need <strong>both</strong> your transaction history (CSV)
+              and your 1099-DA tax forms from each exchange.
+            </p>
+            <div className="space-y-2 text-sm text-blue-800">
+              <p className="font-medium">Where to find your 1099-DA:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>
+                  <strong>Coinbase:</strong>{' '}
+                  <a
+                    href="https://www.coinbase.com/settings/tax-documents"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    Account → Tax Documents
+                  </a>
+                </li>
+                <li>
+                  <strong>Crypto.com:</strong> App → Accounts → Tax Reports → Download 1099-DA
+                </li>
+                <li>
+                  <strong>Other exchanges:</strong> Check your account's tax or documents section
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Drop zone */}
       <div
         className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
@@ -77,7 +150,7 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
       >
         <input
           type="file"
-          accept=".csv"
+          accept=".csv,.pdf,.jpg,.jpeg,.png"
           multiple
           onChange={handleFileInput}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -85,10 +158,10 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
 
         <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
         <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          Drop your CSV files here
+          Drop your transaction history (CSV) and 1099-DA forms here
         </h3>
         <p className="text-sm text-gray-500">
-          Or click to browse your files (we can handle multiple files at once)
+          Or click to browse • Accepts CSV, PDF, and image files
         </p>
       </div>
 
@@ -99,15 +172,24 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
             Selected files ({files.length})
           </h4>
 
-          {files.map((file, index) => (
+          {files.map(({ file, type }, index) => (
             <div
               key={`${file.name}-${index}`}
               className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-500" />
+                {type === 'csv' ? (
+                  <FileText className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <FileBarChart className="w-5 h-5 text-purple-500" />
+                )}
                 <div>
-                  <p className="text-sm font-medium text-gray-700">{file.name}</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {file.name}
+                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                      {type === 'csv' ? 'Transactions' : '1099-DA'}
+                    </span>
+                  </p>
                   <p className="text-xs text-gray-400">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
@@ -125,7 +207,7 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
 
           <button
             onClick={processFiles}
-            disabled={isProcessing}
+            disabled={isProcessing || csvFileCount === 0 || form1099DACount === 0}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             {isProcessing ? (
@@ -154,7 +236,11 @@ export default function FileUpload({ onFilesParsed, isProcessing }: FileUploadPr
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                Calculate Cost Basis
+                {csvFileCount === 0 || form1099DACount === 0 ? (
+                  <>Upload Both CSV and 1099-DA to Continue</>
+                ) : (
+                  <>Calculate Cost Basis ({csvFileCount} CSV, {form1099DACount} 1099-DA)</>
+                )}
               </>
             )}
           </button>

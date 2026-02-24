@@ -9,3 +9,4 @@ export { default as FAQ } from './FAQ';
 export { default as ComprehensiveDisclaimer } from './ComprehensiveDisclaimer';
 export { default as ComparisonTable } from './ComparisonTable';
 export { default as CSVInstructionTabs } from './CSVInstructionTabs';
+export { default as Form1099DAEntry } from './Form1099DAEntry';

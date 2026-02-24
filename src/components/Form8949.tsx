@@ -22,6 +22,25 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
     }).format(amount);
   };
 
+  // Get box description for Form 8949
+  const getBoxDescription = (box: string): { label: string; description: string } => {
+    const boxDescriptions: Record<string, { label: string; description: string }> = {
+      'B': { label: 'Box B', description: 'Short-term transactions reported on Form 1099-B showing basis was not reported to the IRS' },
+      'E': { label: 'Box E', description: 'Long-term transactions reported on Form 1099-B showing basis was not reported to the IRS' },
+      'G': { label: 'Box G', description: 'Short-term transactions reported on Form 1099-DA with basis reported to the IRS' },
+      'H': { label: 'Box H', description: 'Short-term transactions reported on Form 1099-DA with basis NOT reported to the IRS' },
+      'I': { label: 'Box I', description: 'Short-term transactions (not reported on 1099-B or 1099-DA)' },
+      'J': { label: 'Box J', description: 'Long-term transactions reported on Form 1099-DA with basis reported to the IRS' },
+      'K': { label: 'Box K', description: 'Long-term transactions reported on Form 1099-DA with basis NOT reported to the IRS' },
+      'L': { label: 'Box L', description: 'Long-term transactions (not reported on 1099-B or 1099-DA)' },
+    };
+    return boxDescriptions[box] || { label: box, description: 'Unknown box type' };
+  };
+
+  // Get the box for short-term and long-term from actual entries
+  const shortTermBox = summary.shortTerm.entries[0]?.box || 'H';
+  const longTermBox = summary.longTerm.entries[0]?.box || 'K';
+
   // Blurred value component for locked state - uses backdrop blur for premium feel
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
     if (isUnlocked) {
@@ -172,7 +191,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
           <div class="section">
             <div class="section-header">
               <h2>Part I — Short-Term Capital Gains and Losses</h2>
-              <p>☑ Box B: Short-term transactions reported on Form 1099-DA with basis <strong>not reported</strong> to the IRS</p>
+              <p>☑ ${getBoxDescription(shortTermBox).label}: ${getBoxDescription(shortTermBox).description}</p>
             </div>
             ${summary.shortTerm.entries.length > 0 ? `
               <table>
@@ -211,7 +230,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
           <div class="section">
             <div class="section-header">
               <h2>Part II — Long-Term Capital Gains and Losses</h2>
-              <p>☑ Box E: Long-term transactions reported on Form 1099-DA with basis <strong>not reported</strong> to the IRS</p>
+              <p>☑ ${getBoxDescription(longTermBox).label}: ${getBoxDescription(longTermBox).description}</p>
             </div>
             ${summary.longTerm.entries.length > 0 ? `
               <table>
@@ -293,7 +312,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
 
     // Short-term
     content += `PART I — SHORT-TERM CAPITAL GAINS AND LOSSES\n`;
-    content += `Box B: Short-term transactions with basis NOT reported to IRS\n\n`;
+    content += `${getBoxDescription(shortTermBox).label}: ${getBoxDescription(shortTermBox).description}\n\n`;
 
     if (summary.shortTerm.entries.length > 0) {
       content += `${'Description'.padEnd(30)} ${'Acquired'.padEnd(12)} ${'Sold'.padEnd(12)} ${'Proceeds'.padEnd(12)} ${'Basis'.padEnd(12)} ${'Gain/Loss'.padEnd(12)}\n`;
@@ -321,7 +340,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
 
     // Long-term
     content += `PART II — LONG-TERM CAPITAL GAINS AND LOSSES\n`;
-    content += `Box E: Long-term transactions with basis NOT reported to IRS\n\n`;
+    content += `${getBoxDescription(longTermBox).label}: ${getBoxDescription(longTermBox).description}\n\n`;
 
     if (summary.longTerm.entries.length > 0) {
       content += `${'Description'.padEnd(30)} ${'Acquired'.padEnd(12)} ${'Sold'.padEnd(12)} ${'Proceeds'.padEnd(12)} ${'Basis'.padEnd(12)} ${'Gain/Loss'.padEnd(12)}\n`;
@@ -441,8 +460,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
             Part I — Short-Term Capital Gains and Losses
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            ☑ Box B: Short-term transactions reported on Form 1099-DA with basis{' '}
-            <strong>not reported</strong> to the IRS
+            ☑ {getBoxDescription(shortTermBox).label}: {getBoxDescription(shortTermBox).description}
           </p>
 
           {summary.shortTerm.entries.length > 0 ? (
@@ -509,8 +527,7 @@ export default function Form8949({ summary, isUnlocked = false, onUnlock }: Form
             Part II — Long-Term Capital Gains and Losses
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            ☑ Box E: Long-term transactions reported on Form 1099-DA with basis{' '}
-            <strong>not reported</strong> to the IRS
+            ☑ {getBoxDescription(longTermBox).label}: {getBoxDescription(longTermBox).description}
           </p>
 
           {summary.longTerm.entries.length > 0 ? (
