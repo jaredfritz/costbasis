@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { TaxSummary as TaxSummaryType } from '@/lib/types';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Lock, FileText, Coins } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, FileText, Coins } from 'lucide-react';
 
 interface TaxSummaryProps {
   summary: TaxSummaryType;
@@ -153,6 +153,33 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
         </div>
       )}
 
+      {/* Savings Hero Stat */}
+      {!noTaxableEvents && summary.totalCostBasis > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <TrendingDown className="w-6 h-6 text-amber-700" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-amber-900 mb-2">
+                Don't Overpay!
+              </h3>
+              <p className="text-amber-800 text-lg mb-3">
+                You are at risk of overpaying{' '}
+                <span className="font-bold text-2xl text-amber-900">
+                  <BlurredValue>{formatCurrency(summary.totalCostBasis * 0.25)}</BlurredValue>
+                </span>{' '}
+                in taxes if you rely solely on your 1099-DA without calculating your cost basis.
+              </p>
+              <p className="text-sm text-amber-700">
+                Many 1099-DA forms report $0 in cost basis, which means the IRS would tax you on the full proceeds amount. Our tool recovered{' '}
+                <BlurredValue className="font-semibold">{formatCurrency(summary.totalCostBasis)}</BlurredValue> in cost basis, potentially saving you thousands.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Net Result Card */}
       <div
         className={`p-6 rounded-xl ${
@@ -176,24 +203,27 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
         </div>
       </div>
 
-      {/* Unlock CTA - Updated Copy */}
+      {/* Unlock CTA - Download Form 8949 */}
       {!isUnlocked && !noTaxableEvents && (
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
               <div className="p-3 bg-white/20 rounded-lg">
-                <Lock className="w-6 h-6" />
+                <FileText className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Unlock Your Complete Tax Report</h3>
-                <p className="text-blue-100 text-sm">
-                  We found {transactionCount || 'multiple'} transactions and calculated your cost basis for {taxableEvents} taxable event{taxableEvents !== 1 ? 's' : ''}. Unlock your complete Form 8949 and filing-ready values for $9.99.
+                <h3 className="font-semibold text-xl mb-2">Download Your Completed Form 8949</h3>
+                <p className="text-blue-100 text-sm mb-2">
+                  We processed {transactionCount || 'multiple'} transactions and calculated your cost basis for {taxableEvents} taxable event{taxableEvents !== 1 ? 's' : ''}.
+                </p>
+                <p className="text-blue-100 text-sm font-medium">
+                  Unlock your complete tax report to file with your taxes.
                 </p>
               </div>
             </div>
             <button
               onClick={onUnlock}
-              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg whitespace-nowrap"
+              className="px-8 py-4 bg-white text-blue-600 font-bold text-lg rounded-lg hover:bg-blue-50 transition-colors shadow-lg whitespace-nowrap"
             >
               Unlock for $9.99
             </button>
@@ -308,6 +338,46 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
           </div>
         </div>
       </div>
+
+      {/* Compare to your 1099-DA */}
+      {!noTaxableEvents && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-gray-600" />
+            Compare to Your 1099-DA
+          </h3>
+          <div className="space-y-3 text-sm text-gray-700">
+            <p>
+              Once you receive your 1099-DA form from your exchange, you should verify that the <strong>Total Proceeds</strong> on your 1099-DA matches the Total Proceeds we calculated above.
+            </p>
+            <p>
+              If there's a significant difference, it may indicate:
+            </p>
+            <ul className="list-disc list-inside ml-2 space-y-1 text-gray-600">
+              <li>Missing transactions in your uploaded CSV</li>
+              <li>Transactions from other exchanges not included</li>
+              <li>Timing differences in how dispositions are reported</li>
+            </ul>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <p className="text-blue-900 font-medium mb-2">
+                📦 Record-Keeping Packet Included
+              </p>
+              <p className="text-blue-800 text-sm">
+                When you unlock your report, you'll receive a complete Record-Keeping Packet containing:
+              </p>
+              <ul className="list-disc list-inside ml-2 mt-2 space-y-1 text-blue-700 text-sm">
+                <li>Your completed Form 8949 ready for filing</li>
+                <li>A reconciliation report comparing your calculations to your 1099-DA</li>
+                <li>Raw CSV data used for the calculation</li>
+                <li>Timestamped PDF of all results for your records</li>
+              </ul>
+              <p className="text-blue-700 text-xs mt-3">
+                This comprehensive documentation ensures you have detailed records should any questions arise during tax filing or an audit.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

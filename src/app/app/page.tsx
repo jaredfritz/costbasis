@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import Papa from 'papaparse';
-import { Calculator, Shield, FileText, HelpCircle, Download, Upload, FileCheck } from 'lucide-react';
+import { Calculator, Shield, FileText, HelpCircle, Download, Upload, FileCheck, Lock, DollarSign } from 'lucide-react';
 import { FileUpload, TaxSummary, Form8949, TaxSoftwareGuide, Disclaimer, CompactDisclaimer } from '@/components';
 import { parseCSV, preprocessCoinbaseCSV } from '@/lib/parsers';
 import { calculateFIFO } from '@/lib/calculator';
@@ -151,9 +151,25 @@ export default function Home() {
               alt="CostBasis"
               className="h-10 mx-auto mb-4"
             />
-            <p className="text-gray-600 text-lg">
-              Calculate your true cost basis for your crypto transactions
+            <p className="text-gray-700 text-xl font-medium">
+              Don't overpay the IRS for your crypto gains.
             </p>
+          </div>
+
+          {/* Privacy Trust Badges */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <Shield className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-900">100% Client-Side</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <DollarSign className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">No Subscription Required</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg">
+              <Lock className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-900">Data Never Leaves Your Device</span>
+            </div>
           </div>
 
           {/* 3-Step Guide */}
@@ -222,8 +238,8 @@ export default function Home() {
             alt="CostBasis"
             className="h-10 mx-auto mb-4"
           />
-          <p className="text-gray-600">
-            Upload your transaction history to calculate cost basis to ensure you don't overpay.
+          <p className="text-gray-700 text-lg font-medium">
+            Don't overpay the IRS for your crypto gains.
           </p>
         </header>
 
