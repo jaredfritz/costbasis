@@ -3,13 +3,20 @@
 import React, { useState, useCallback } from 'react';
 import Papa from 'papaparse';
 import { Calculator, Shield, FileText, HelpCircle, Download, Upload, FileCheck, Lock, DollarSign } from 'lucide-react';
-import { FileUpload, TaxSummary, Form8949, TaxSoftwareGuide, Disclaimer, CompactDisclaimer } from '@/components';
+import { FileUpload, TaxSummary, Form8949, TaxSoftwareGuide, Disclaimer, CompactDisclaimer, ColumnMapper } from '@/components';
 import { parseCSV, preprocessCoinbaseCSV } from '@/lib/parsers';
+import { parseGenericCSV, ColumnMapping } from '@/lib/parsers/generic';
 import { calculateFIFO } from '@/lib/calculator';
 import { validate1099DAAgainstCalculations } from '@/lib/validation';
 import { TaxSummary as TaxSummaryType, NormalizedTransaction, ProcessingResult, Form1099DA } from '@/lib/types';
 
 type TabType = 'summary' | 'form8949' | 'guide';
+
+interface UnmappedFile {
+  name: string;
+  rows: Record<string, string>[];
+  headers: string[];
+}
 
 export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -21,6 +28,10 @@ export default function Home() {
   const [errors, setErrors] = useState<string[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Column mapping state
+  const [unmappedFile, setUnmappedFile] = useState<UnmappedFile | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<{ csvFiles: { name: string; content: string }[]; form1099DAFiles: { name: string; file: File }[] } | null>(null);
 
   const handleFilesParsed = useCallback(
     async (files: { csvFiles: { name: string; content: string }[]; form1099DAFiles: { name: string; file: File }[] }) => {
@@ -60,6 +71,14 @@ export default function Home() {
 
           // Parse transactions
           const parsed = parseCSV(rows, headers);
+
+          // If format is unknown, pause and show column mapper
+          if (!parsed.success && parsed.source === 'unknown') {
+            setUnmappedFile({ name: file.name, rows, headers });
+            setPendingFiles(files);
+            setIsProcessing(false);
+            return;
+          }
 
           if (!parsed.success) {
             allErrors.push(...parsed.errors.map((e) => `${file.name}: ${e}`));
@@ -132,12 +151,95 @@ export default function Home() {
     [taxYear]
   );
 
+  const handleMappingComplete = useCallback(
+    (mapping: ColumnMapping) => {
+      if (!unmappedFile || !pendingFiles) return;
+
+      setIsProcessing(true);
+
+      try {
+        // Parse the unmapped file with the provided mapping
+        const transactions = parseGenericCSV(unmappedFile.rows, mapping);
+
+        // Clear unmapped file state
+        setUnmappedFile(null);
+        setPendingFiles(null);
+
+        // Continue processing with the mapped transactions
+        // Re-trigger handleFilesParsed with the already-parsed transactions
+        const allParsedTransactions: NormalizedTransaction[] = [...transactions];
+        const allWarnings: string[] = [
+          `${unmappedFile.name}: Successfully mapped ${transactions.length} transactions using custom column mapping.`,
+        ];
+        const allErrors: string[] = [];
+
+        if (allParsedTransactions.length === 0) {
+          setErrors([...allErrors, 'No valid transactions found in the mapped file.']);
+          setIsProcessing(false);
+          return;
+        }
+
+        setAllTransactions(allParsedTransactions);
+
+        // Create simplified Form1099DA objects from uploaded files (if any)
+        const form1099DAs: Form1099DA[] = pendingFiles.form1099DAFiles.map((f) => ({
+          fileName: f.name,
+          exchange: 'Unknown',
+          grossProceeds: 0,
+          basisReportedToIRS: false,
+          shortTermBox: 'H' as const,
+          longTermBox: 'K' as const,
+          hasShortTerm: true,
+          hasLongTerm: true,
+          taxYear,
+        }));
+
+        // Calculate using FIFO
+        const calcResult = calculateFIFO(allParsedTransactions, taxYear, form1099DAs);
+
+        // Only validate if 1099-DA forms were provided
+        const discrepancies =
+          form1099DAs.length > 0 && calcResult.taxSummary
+            ? validate1099DAAgainstCalculations(form1099DAs, calcResult.taxSummary, allParsedTransactions)
+            : [];
+
+        // Build result with 1099-DA data and validation
+        const resultWithForms: ProcessingResult = {
+          ...calcResult,
+          form1099DAs: form1099DAs.length > 0 ? form1099DAs : undefined,
+          discrepancies: discrepancies.length > 0 ? discrepancies : undefined,
+        };
+
+        // Convert discrepancies to warnings/errors
+        const discrepancyWarnings = discrepancies.filter((d) => d.severity === 'warning').map((d) => d.message);
+        const discrepancyErrors = discrepancies.filter((d) => d.severity === 'error').map((d) => d.message);
+
+        setResult(resultWithForms);
+        setWarnings([...allWarnings, ...calcResult.warnings, ...discrepancyWarnings]);
+        setErrors([...allErrors, ...calcResult.errors, ...discrepancyErrors]);
+      } catch (error) {
+        setErrors([`Error processing mapped file: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [unmappedFile, pendingFiles, taxYear]
+  );
+
+  const handleMappingCancel = () => {
+    setUnmappedFile(null);
+    setPendingFiles(null);
+    setErrors(['CSV mapping cancelled. Please upload a CSV from a supported exchange (Coinbase, Binance, Kraken, Gemini, Crypto.com) or try mapping again.']);
+  };
+
   const resetCalculator = () => {
     setResult(null);
     setAllTransactions([]);
     setErrors([]);
     setWarnings([]);
     setActiveTab('summary');
+    setUnmappedFile(null);
+    setPendingFiles(null);
   };
 
   // Show disclaimer acceptance screen first
@@ -264,18 +366,31 @@ export default function Home() {
         {/* Main Content */}
         {!result ? (
           <>
-            <FileUpload onFilesParsed={handleFilesParsed} isProcessing={isProcessing} />
+            {!unmappedFile ? (
+              <>
+                <FileUpload onFilesParsed={handleFilesParsed} isProcessing={isProcessing} />
 
-            {errors.length > 0 && (
-              <div className="mt-6 max-w-2xl mx-auto">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-red-800 mb-2">Errors</h4>
-                  <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
-                    {errors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
+                {errors.length > 0 && (
+                  <div className="mt-6 max-w-2xl mx-auto">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-red-800 mb-2">Errors</h4>
+                      <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
+                        {errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="max-w-4xl mx-auto">
+                <ColumnMapper
+                  csvData={unmappedFile.rows}
+                  headers={unmappedFile.headers}
+                  onMappingComplete={handleMappingComplete}
+                  onCancel={handleMappingCancel}
+                />
               </div>
             )}
           </>
