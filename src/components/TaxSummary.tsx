@@ -58,8 +58,27 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
     const alerts: { type: 'missing-basis' | 'complexity'; message: string; details: string }[] = [];
 
     warnings.forEach(warning => {
-      // Detect missing basis warnings
-      if (warning.includes('Missing') && warning.includes('cost basis may be incomplete')) {
+      // Enhanced missing basis warnings from calculator
+      if (warning.startsWith('MISSING_BASIS:')) {
+        const cleanWarning = warning.replace('MISSING_BASIS:', '').trim();
+        const assetMatch = cleanWarning.match(/Sold [\d.]+ ([A-Z0-9]+)/);
+        const exchangeMatch = cleanWarning.match(/on ([A-Za-z.]+) \(/);
+        const missingMatch = cleanWarning.match(/Missing ([\d.]+) ([A-Z0-9]+)/);
+
+        const asset = assetMatch ? assetMatch[1] : 'crypto';
+        const exchange = exchangeMatch ? exchangeMatch[1] : 'this exchange';
+        const missingAmount = missingMatch ? missingMatch[1] : '';
+
+        alerts.push({
+          type: 'missing-basis',
+          message: `Missing ${missingAmount} ${asset} purchase record`,
+          details: `We see you sold ${asset} on ${exchange}, but your transaction history doesn't show that you bought it there. ` +
+                   `Did you upload your full transaction history from ${exchange}? ` +
+                   `If you transferred this ${asset} from another exchange or wallet, please upload that CSV to ensure accurate cost basis calculation.`
+        });
+      }
+      // Legacy missing basis warnings (for backward compatibility)
+      else if (warning.includes('Missing') && warning.includes('cost basis may be incomplete')) {
         const assetMatch = warning.match(/Sold [\d.]+ ([A-Z0-9]+)/);
         const amountMatch = warning.match(/Missing ([\d.]+)/);
         const asset = assetMatch ? assetMatch[1] : 'crypto';
@@ -72,9 +91,25 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
         });
       }
 
-      // Detect complexity warnings (staking, mining, etc.)
-      // These would need to be added to the parser/calculator
-      if (warning.toLowerCase().includes('staking') ||
+      // Staking/income warnings from calculator
+      if (warning.startsWith('STAKING_INCOME:')) {
+        const cleanWarning = warning.replace('STAKING_INCOME:', '').trim();
+        const countMatch = cleanWarning.match(/detected (\d+) staking/);
+        const valueMatch = cleanWarning.match(/value of \$([0-9,]+\.\d+)/);
+
+        const count = countMatch ? countMatch[1] : '';
+        const value = valueMatch ? valueMatch[1] : '';
+
+        alerts.push({
+          type: 'complexity',
+          message: `${count} staking/reward transactions detected ($${value})`,
+          details: `CostBasis is a capital gains tool and does not process ordinary income. ` +
+                   `While these rewards are often minor and unreported by casual traders, they may need to be reported as ordinary income on your tax return. ` +
+                   `Consult with a tax professional if you have significant staking or reward income.`
+        });
+      }
+      // Legacy complexity warnings (for backward compatibility)
+      else if (warning.toLowerCase().includes('staking') ||
           warning.toLowerCase().includes('mining') ||
           warning.toLowerCase().includes('reward') ||
           warning.toLowerCase().includes('income')) {

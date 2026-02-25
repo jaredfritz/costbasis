@@ -56,6 +56,9 @@ export function calculateFIFO(
   const warnings: string[] = [];
   const errors: string[] = [];
 
+  // Track staking/reward transactions for income warning
+  const stakingTransactions: NormalizedTransaction[] = [];
+
   // Group transactions by asset
   const lotsByAsset: Map<string, TaxLot[]> = new Map();
   const dispositions: DispositionWithBasis[] = [];
@@ -75,6 +78,14 @@ export function calculateFIFO(
     const lots = lotsByAsset.get(asset)!;
 
     if (tx.type === 'acquisition') {
+      // Check if this is a staking/reward transaction based on description
+      const desc = tx.rawDescription?.toLowerCase() || '';
+      if (desc.includes('reward') || desc.includes('staking') ||
+          desc.includes('earn') || desc.includes('interest') ||
+          desc.includes('mining') || desc.includes('cashback')) {
+        stakingTransactions.push(tx);
+      }
+
       // Add a new lot
       const lot: TaxLot = {
         id: tx.id,
@@ -119,12 +130,17 @@ export function calculateFIFO(
         amountToSell -= amountFromLot;
       }
 
-      // Check if we had enough lots to cover the sale
+      // Check if we had enough lots to cover the sale - generate enhanced warning
       if (amountToSell > 0.00000001) { // Small tolerance for floating point
+        const exchangeName = tx.source === 'crypto.com' ? 'Crypto.com' :
+                            tx.source === 'coinbase' ? 'Coinbase' : tx.source;
+
         warnings.push(
-          `Warning: Sold ${tx.amount} ${asset} on ${format(tx.timestamp, 'yyyy-MM-dd')} ` +
-          `but only ${tx.amount - amountToSell} ${asset} was available in lots. ` +
-          `Missing ${amountToSell.toFixed(8)} ${asset} - cost basis may be incomplete.`
+          `MISSING_BASIS: Sold ${tx.amount.toFixed(8)} ${asset} on ${exchangeName} (${format(tx.timestamp, 'MMM d, yyyy')}), ` +
+          `but only ${(tx.amount - amountToSell).toFixed(8)} ${asset} was available in your transaction history. ` +
+          `Missing ${amountToSell.toFixed(8)} ${asset} - cost basis may be incomplete. ` +
+          `Did you upload your full transaction history from ${exchangeName}? ` +
+          `If you transferred this ${asset} from another exchange or wallet, please upload that transaction history to ensure accurate cost basis calculation.`
         );
       }
 
@@ -148,6 +164,18 @@ export function calculateFIFO(
 
       dispositions.push(disposition);
     }
+  }
+
+  // Add staking/income warning if detected
+  if (stakingTransactions.length > 0) {
+    const totalStakingValue = stakingTransactions.reduce((sum, tx) => sum + tx.costBasisUSD, 0);
+    warnings.push(
+      `STAKING_INCOME: We detected ${stakingTransactions.length} staking/reward transaction(s) ` +
+      `with a total value of $${totalStakingValue.toFixed(2)}. ` +
+      `CostBasis is a capital gains tool and does not process ordinary income. ` +
+      `While these rewards are often minor and unreported by casual traders, they may need to be reported as ordinary income on your tax return. ` +
+      `Consult with a tax professional if you have significant staking or reward income.`
+    );
   }
 
   // Filter dispositions to the tax year
