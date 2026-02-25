@@ -158,60 +158,56 @@ export default function Home() {
 
           {/* Privacy Trust Badges */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-              <Shield className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-900">100% Client-Side</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg">
+              <Shield className="w-4 h-4 text-[#1A2B3C]" />
+              <span className="text-sm font-medium text-[#1A2B3C]">100% Client-Side</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <DollarSign className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">No Subscription Required</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg">
+              <DollarSign className="w-4 h-4 text-[#1A2B3C]" />
+              <span className="text-sm font-medium text-[#1A2B3C]">No Subscription Required</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg">
-              <Lock className="w-4 h-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-900">Data Never Leaves Your Device</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg">
+              <Lock className="w-4 h-4 text-[#1A2B3C]" />
+              <span className="text-sm font-medium text-[#1A2B3C]">Data Never Leaves Your Device</span>
             </div>
           </div>
 
           {/* 3-Step Guide */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-8">
+          <div className="bg-white rounded-lg border border-gray-300 p-8 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Download className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Download className="w-8 h-8 text-[#1A2B3C]" />
                 </div>
                 <div className="mb-2">
-                  <span className="font-bold text-green-600">Step 1:</span>{' '}
-                  <span className="font-semibold text-gray-900">Export</span>
+                  <span className="font-bold text-[#1A2B3C]">1. Export</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Log into your exchange and download your <strong>All-Time</strong> transaction history CSV
-                  (we can handle multiple CSVs if that's easiest for you).
+                  Download your all-time transaction history CSV from your exchange.
                 </p>
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Upload className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Upload className="w-8 h-8 text-[#1A2B3C]" />
                 </div>
                 <div className="mb-2">
-                  <span className="font-bold text-blue-600">Step 2:</span>{' '}
-                  <span className="font-semibold text-gray-900">Upload</span>
+                  <span className="font-bold text-[#1A2B3C]">2. Upload</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Drag and drop your files. Our code runs locally; your data never leaves your device.
+                  Drag and drop your files. Data processed locally on your device.
                 </p>
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileCheck className="w-8 h-8 text-purple-600" />
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileCheck className="w-8 h-8 text-[#1A2B3C]" />
                 </div>
                 <div className="mb-2">
-                  <span className="font-bold text-purple-600">Step 3:</span>{' '}
-                  <span className="font-semibold text-gray-900">Review</span>
+                  <span className="font-bold text-[#1A2B3C]">3. Review</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  See your calculated gains and download your filing-ready Form 8949.
+                  Download your completed Form 8949 ready for filing.
                 </p>
               </div>
             </div>
@@ -219,7 +215,7 @@ export default function Home() {
 
           <button
             onClick={() => setHasAcceptedDisclaimer(true)}
-            className="w-full px-8 py-4 bg-green-600 text-white font-bold text-lg rounded-xl hover:bg-green-700 transition-all shadow-lg hover:scale-[1.02]"
+            className="w-full px-8 py-4 bg-[#22C55E] text-white font-bold text-lg rounded-lg hover:bg-[#22C55E]/90 transition-all"
           >
             Get Started
           </button>
