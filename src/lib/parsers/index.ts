@@ -1,6 +1,9 @@
 import { NormalizedTransaction, ExchangeSource } from '../types';
 import { parseCryptoComCSV, detectCryptoComFormat } from './crypto-com';
 import { parseCoinbaseCSV, detectCoinbaseFormat } from './coinbase';
+import { parseBinanceCSV, detectBinanceFormat } from './binance';
+import { parseKrakenCSV, detectKrakenFormat } from './kraken';
+import { parseGeminiCSV, detectGeminiFormat } from './gemini';
 
 export interface ParseResult {
   success: boolean;
@@ -17,6 +20,15 @@ export function detectExchangeFormat(headers: string[]): ExchangeSource {
   if (detectCoinbaseFormat(headers)) {
     return 'coinbase';
   }
+  if (detectBinanceFormat(headers)) {
+    return 'binance';
+  }
+  if (detectKrakenFormat(headers)) {
+    return 'kraken';
+  }
+  if (detectGeminiFormat(headers)) {
+    return 'gemini';
+  }
   return 'unknown';
 }
 
@@ -31,7 +43,7 @@ export function parseCSV(rows: Record<string, string>[], headers: string[]): Par
       transactions: [],
       source,
       warnings,
-      errors: ['Unable to detect exchange format. Please ensure you are uploading a CSV from Crypto.com or Coinbase.'],
+      errors: ['Unable to detect exchange format. Supported exchanges: Crypto.com, Coinbase, Binance, Kraken, Gemini. Please ensure you are uploading a CSV from one of these exchanges.'],
     };
   }
 
@@ -42,6 +54,12 @@ export function parseCSV(rows: Record<string, string>[], headers: string[]): Par
       transactions = parseCryptoComCSV(rows as any);
     } else if (source === 'coinbase') {
       transactions = parseCoinbaseCSV(rows as any);
+    } else if (source === 'binance') {
+      transactions = parseBinanceCSV(rows as any);
+    } else if (source === 'kraken') {
+      transactions = parseKrakenCSV(rows as any);
+    } else if (source === 'gemini') {
+      transactions = parseGeminiCSV(rows as any);
     } else {
       transactions = [];
     }
@@ -70,3 +88,6 @@ export function parseCSV(rows: Record<string, string>[], headers: string[]): Par
 
 export { parseCryptoComCSV, detectCryptoComFormat } from './crypto-com';
 export { parseCoinbaseCSV, detectCoinbaseFormat, preprocessCoinbaseCSV } from './coinbase';
+export { parseBinanceCSV, detectBinanceFormat } from './binance';
+export { parseKrakenCSV, detectKrakenFormat } from './kraken';
+export { parseGeminiCSV, detectGeminiFormat } from './gemini';

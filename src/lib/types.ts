@@ -1,7 +1,7 @@
 // Core transaction types
 export type TransactionType = 'buy' | 'sell' | 'transfer' | 'reward' | 'fee' | 'dust_conversion' | 'unknown';
 
-export type ExchangeSource = 'crypto.com' | 'coinbase' | 'unknown';
+export type ExchangeSource = 'crypto.com' | 'coinbase' | 'binance' | 'kraken' | 'gemini' | 'unknown';
 
 export interface RawTransaction {
   timestamp: Date;

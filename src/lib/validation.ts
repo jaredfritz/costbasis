@@ -171,6 +171,9 @@ function normalizeExchangeName(exchange: string): string {
 function normalizeExchangeSource(source: ExchangeSource): string {
   if (source === 'crypto.com') return 'crypto.com';
   if (source === 'coinbase') return 'coinbase';
+  if (source === 'binance') return 'binance';
+  if (source === 'kraken') return 'kraken';
+  if (source === 'gemini') return 'gemini';
   return source;
 }
 
@@ -180,5 +183,8 @@ function normalizeExchangeSource(source: ExchangeSource): string {
 function getExchangeDisplayName(exchangeKey: string): string {
   if (exchangeKey === 'crypto.com') return 'Crypto.com';
   if (exchangeKey === 'coinbase') return 'Coinbase';
+  if (exchangeKey === 'binance') return 'Binance';
+  if (exchangeKey === 'kraken') return 'Kraken';
+  if (exchangeKey === 'gemini') return 'Gemini';
   return exchangeKey.charAt(0).toUpperCase() + exchangeKey.slice(1);
 }
