@@ -348,6 +348,7 @@ export default function Home() {
                     onUnlock={() => setIsUnlocked(true)}
                     transactionCount={allTransactions.length}
                     dateRange={minDate && maxDate ? { min: minDate, max: maxDate } : undefined}
+                    warnings={warnings}
                   />
                 );
               })()}

@@ -11,9 +11,10 @@ interface TaxSummaryProps {
   onUnlock?: () => void;
   transactionCount?: number;
   dateRange?: { min: Date; max: Date };
+  warnings?: string[];
 }
 
-export default function TaxSummary({ summary, isUnlocked = false, onUnlock, transactionCount, dateRange }: TaxSummaryProps) {
+export default function TaxSummary({ summary, isUnlocked = false, onUnlock, transactionCount, dateRange, warnings = [] }: TaxSummaryProps) {
   const formatCurrency = (amount: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -51,6 +52,42 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
   }, [summary]);
 
   const taxableEvents = summary.shortTerm.entries.length + summary.longTerm.entries.length;
+
+  // Parse warnings into validation alerts
+  const validationAlerts = useMemo(() => {
+    const alerts: { type: 'missing-basis' | 'complexity'; message: string; details: string }[] = [];
+
+    warnings.forEach(warning => {
+      // Detect missing basis warnings
+      if (warning.includes('Missing') && warning.includes('cost basis may be incomplete')) {
+        const assetMatch = warning.match(/Sold [\d.]+ ([A-Z0-9]+)/);
+        const amountMatch = warning.match(/Missing ([\d.]+)/);
+        const asset = assetMatch ? assetMatch[1] : 'crypto';
+        const amount = amountMatch ? amountMatch[1] : '';
+
+        alerts.push({
+          type: 'missing-basis',
+          message: `Missing purchase record for ${asset}`,
+          details: `We see a sale of ${amount} ${asset}, but don't have a matching purchase record. Did you buy this on another exchange? Upload that CSV to ensure accurate cost basis calculation.`
+        });
+      }
+
+      // Detect complexity warnings (staking, mining, etc.)
+      // These would need to be added to the parser/calculator
+      if (warning.toLowerCase().includes('staking') ||
+          warning.toLowerCase().includes('mining') ||
+          warning.toLowerCase().includes('reward') ||
+          warning.toLowerCase().includes('income')) {
+        alerts.push({
+          type: 'complexity',
+          message: 'Income transactions detected',
+          details: warning
+        });
+      }
+    });
+
+    return alerts;
+  }, [warnings]);
 
   // Blurred value component
   const BlurredValue = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
@@ -124,6 +161,25 @@ export default function TaxSummary({ summary, isUnlocked = false, onUnlock, tran
           </div>
         )}
       </div>
+
+      {/* Validation Alerts - The "Safety Net" */}
+      {validationAlerts.length > 0 && (
+        <div className="space-y-3">
+          {validationAlerts.map((alert, index) => (
+            <div
+              key={index}
+              className="bg-gray-50 border-l-4 border-[#1A2B3C] rounded-lg p-4"
+            >
+              <div className="font-semibold text-[#1A2B3C]">
+                {alert.message}
+              </div>
+              <p className="text-sm mt-1 text-gray-700">
+                {alert.details}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* No Taxable Events Message */}
       {noTaxableEvents && (
